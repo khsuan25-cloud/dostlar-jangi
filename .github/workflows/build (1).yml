@@ -1,0 +1,28 @@
+name: APK yasash
+on: [push, workflow_dispatch]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -o DostlarJangi-android.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: echo "sdk.dir=$ANDROID_HOME" > DostlarJangi/local.properties && ls $ANDROID_HOME
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - run: gradle assembleRelease
+        working-directory: DostlarJangi
+      - run: cp DostlarJangi/app/build/outputs/apk/release/*.apk DostlarJangi.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DostlarJangi-apk
+          path: DostlarJangi.apk
+      - run: gh release create "v${{ github.run_number }}" DostlarJangi.apk --title "Do'stlar Jangi v${{ github.run_number }}" --notes "Wi-Fi bilan"
+        env:
+          GH_TOKEN: ${{ github.token }}
